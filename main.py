@@ -3,9 +3,9 @@ from random import randrange
 from random import randint
 
 Window_Height = 1000
-Window_Width = 1250
+Window_Width = 1000
 screen = pg.display.set_mode((Window_Width, Window_Height))
-Tile_Size = 25
+Tile_Size = 100
 clock = pg.time.Clock()
 random_range = (Tile_Size, (Window_Width // Tile_Size) - Tile_Size)
 get_random_position = lambda: [randrange(1, (Window_Width // Tile_Size)) * Tile_Size, randrange(1, (Window_Height // Tile_Size)) * Tile_Size]
@@ -19,12 +19,8 @@ class Snake:
         self.lastpositionbuff = []
 
     def random_head_position(self):
-        self.head.append(((randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))))
-        for i in self.head:
-            if i == 0 or i == 25:
-                i = 50;
+        self.head.append(((randrange(100, Window_Width, Tile_Size), randrange(100, Window_Height, Tile_Size))))
         self.positions = self.head
-
     def move(self):
         snake_len = len(self.positions) - 1
        
@@ -76,10 +72,12 @@ def check_collision(snake, food):
         food.position = []
         food.randomize_position()
     if snake.positions[0][0] == Window_Width or snake.positions[0][0] == 0:
+        print(snake.positions[0][0])
         print('Game Over')
         pg.quit()
         quit()
     if snake.positions[0][1] == Window_Height or snake.positions[0][1] == 0:
+        print(snake.positions[0][1])
         print('Game Over')
         pg.quit()
         quit()
@@ -131,6 +129,7 @@ def main():
         
         check_collision(snake, food)
         snake.move()
+        [pg.draw.rect(screen, 'red', (x, y, Tile_Size, Tile_Size)) for x, y in food.position]
         for x, y in snake.positions:
             print(snake.positions)
             if counter_head == 0:
@@ -140,10 +139,9 @@ def main():
                 [pg.draw.rect(screen, 'blue', (x, y, Tile_Size, Tile_Size))]
 
 
-        [pg.draw.rect(screen, 'red', (x, y, Tile_Size, Tile_Size)) for x, y in food.position]
         
         pg.display.flip()
-        clock.tick(10)
+        clock.tick(4)
 
 if __name__ == '__main__':
     main()
