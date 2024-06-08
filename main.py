@@ -29,7 +29,7 @@ class Snake:
         snake_len = len(self.positions) - 1
        
         self.lastpositionbuff = self.positions[snake_len]
-        del self.positions[snake_len]
+        del self.positions[snake_len] 
 
         if snake_len == 0:
             if self.direction == 0:
@@ -59,6 +59,9 @@ class Food:
 
     def randomize_position(self):
         self.position.append(((randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))))
+        for i in self.position:
+            if i == 0 or i == 25:
+                i = 50;
 
     def draw(self):
         pg.draw.rect(screen, 'red', (self.position[0], self.position[1], Tile_Size, Tile_Size))
