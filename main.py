@@ -34,6 +34,7 @@ class SnakeAgent:
     def random_head_position(self):
         self.head.append(((randrange(100, Window_Width, Tile_Size), randrange(100, Window_Height, Tile_Size))))
         self.positions = self.head
+
     def move(self):
         snake_len = len(self.positions) - 1
        
@@ -80,13 +81,11 @@ class Food:
         self.position.append(((randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))))
         for i in self.position:
             if i == 0 or i == 25:
-                i = 50;
+                i = 50
 
     def draw(self):
         pg.draw.rect(screen, 'red', (self.position[0], self.position[1], Tile_Size, Tile_Size))
-
-
-
+        
 
 def check_collision(snake, food):
     if snake.positions[0] == food.position[0]:
@@ -96,12 +95,16 @@ def check_collision(snake, food):
         food.randomize_position()
         snake.score += 1
         snake.drawScore()
-    if snake.positions[0][0] == Window_Width or snake.positions[0][0] == 0:
+
+    if snake.positions[0][0] == Window_Width or snake.positions[0][0] == -Tile_Size:
+
         print(snake.positions[0][0])
         print('Game Over')
         pg.quit()
         quit()
-    if snake.positions[0][1] == Window_Height or snake.positions[0][1] == 0:
+
+    if snake.positions[0][1] == Window_Height or snake.positions[0][1] == -Tile_Size:
+
         print(snake.positions[0][1])
         print('Game Over')
         game_reset(snake, food)
@@ -113,11 +116,6 @@ def check_collision(snake, food):
                 pg.quit()
                 quit()
         
-    
-
-
-
-
 
 def change_direction(snake, event, food):
     for event in pg.event.get():
@@ -143,9 +141,9 @@ def change_direction(snake, event, food):
                     snake.direction = 3
 
     draw_grid(snake, food)
-    check_collision(snake, food)
     snake.move()
     draw_grid(snake, food)
+    check_collision(snake, food)
 
 def draw_grid(snake, food):
     screen.fill((0, 0, 0))
