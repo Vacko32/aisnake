@@ -1,27 +1,18 @@
-import pygame as pg 
-import numpy as np 
-from random import randrange
-from random import randint
+import pygame as pg
+import numpy as np
+import pickle
+from random import randrange, randint, uniform
+from math import sqrt
+
 pg.init()
 font = pg.font.SysFont('dejavusansmono', 25)
 
-Window_Height = 1000
-Window_Width = 1000
+Window_Height = 300
+Window_Width = 300
 screen = pg.display.set_mode((Window_Width, Window_Height))
 Tile_Size = 50
 clock = pg.time.Clock()
-random_range = (Tile_Size, (Window_Width // Tile_Size) - Tile_Size)
 get_random_position = lambda: [randrange(1, (Window_Width // Tile_Size)) * Tile_Size, randrange(1, (Window_Height // Tile_Size)) * Tile_Size]
-reward = 0
-
-
-# reset 
-# reward 
-# play(action) returns direction
-# frame, state, game iteration 
-# is collision change
-
-
 
 class SnakeAgent:
     def __init__(self):
@@ -30,49 +21,35 @@ class SnakeAgent:
         self.positions = []
         self.direction = 0
         self.lastpositionbuff = []
-        self.frameiteration = 0
         self.score = 0
-        self.isrunning = True
 
-    def random_head_position(self):
-        self.head.append(((randrange(100, Window_Width, Tile_Size), randrange(100, Window_Height, Tile_Size))))
-        self.positions = self.head
+    def generate_head_position(self):
+        initial_x = Window_Width // 2
+        initial_y = Window_Height // 2
+        self.head = [(initial_x, initial_y)]
+        self.positions = self.head[:]
+
     def move(self):
-        snake_len = len(self.positions) - 1
-       
-        self.lastpositionbuff = self.positions[snake_len]
-        del self.positions[snake_len] 
-
-        if snake_len == 0:
-            if self.direction == 0: # up
-                self.positions.insert(0, (self.lastpositionbuff[0], self.lastpositionbuff[1] - Tile_Size))
-            if self.direction == 1: # right
-                self.positions.insert(0, (self.lastpositionbuff[0] + Tile_Size, self.lastpositionbuff[1]))
-            if self.direction == 2: # down
-                self.positions.insert(0, (self.lastpositionbuff[0], self.lastpositionbuff[1] + Tile_Size))
-            if self.direction == 3: # left
-                self.positions.insert(0, (self.lastpositionbuff[0] - Tile_Size, self.lastpositionbuff[1]))
-        else:
-            if self.direction == 0:
-                self.positions.insert(0, (self.positions[0][0], self.positions[0][1] - Tile_Size))
-            if self.direction == 1:
-                self.positions.insert(0, (self.positions[0][0] + Tile_Size, self.positions[0][1]))
-            if self.direction == 2:
-                self.positions.insert(0, (self.positions[0][0], self.positions[0][1] + Tile_Size))
-            if self.direction == 3:
-                self.positions.insert(0, (self.positions[0][0] - Tile_Size, self.positions[0][1]))
-        self.frameiteration += 1
+        self.lastpositionbuff = self.positions[-1]
+        if self.direction == 0:
+            new_head = (self.positions[0][0], self.positions[0][1] - Tile_Size)
+        elif self.direction == 1:
+            new_head = (self.positions[0][0] + Tile_Size, self.positions[0][1])
+        elif self.direction == 2:
+            new_head = (self.positions[0][0], self.positions[0][1] + Tile_Size)
+        elif self.direction == 3:
+            new_head = (self.positions[0][0] - Tile_Size, self.positions[0][1])
         
+        self.positions = [new_head] + self.positions[:-1]
+
     def reset(self):
         self.length = 1
         self.head = []
         self.positions = []
         self.direction = 0
         self.lastpositionbuff = []
-        self.random_head_position()
-        self.move()
+        self.generate_head_position()
         self.score = 0
-        self.frameiteration = 0
 
     def drawScore(self):
         screen.blit(font.render(f'Score: {self.score}', True, (255, 255, 255)), (0, 0))
@@ -82,129 +59,129 @@ class Food:
         self.position = []
 
     def randomize_position(self):
-        self.position.append(((randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))))
-        for i in self.position:
-            if i == 0 or i == 25:
-                i = 50;
+        self.position = [(randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))]
 
     def draw(self):
-        pg.draw.rect(screen, 'red', (self.position[0], self.position[1], Tile_Size, Tile_Size))
-
-
-
+        pg.draw.rect(screen, 'red', (self.position[0][0], self.position[0][1], Tile_Size, Tile_Size))
 
 def check_collision(snake, food):
     if snake.positions[0] == food.position[0]:
         snake.length += 1
         snake.positions.append(snake.lastpositionbuff)
-        reward = 5
         food.position = []
         food.randomize_position()
         snake.score += 1
-        snake.drawScore()
-    if snake.positions[0][0] == Window_Width or snake.positions[0][0] == 0:
-        print(snake.positions[0][0])
+    if snake.positions[0][0] >= Window_Width or snake.positions[0][0] < 0 or snake.positions[0][1] >= Window_Height or snake.positions[0][1] < 0:
         print('Game Over')
-        reward = -10
-        snake.isrunning = False
-        
-    if snake.positions[0][1] == Window_Height or snake.positions[0][1] == 0:
-        print(snake.positions[0][1])
-        reward = -10
+        return True
+    if snake.length > 1 and any(snake.positions[0] == pos for pos in snake.positions[1:]):
         print('Game Over')
-        snake.isrunning = False
-        
-    if snake.length > 1:
-        for i in snake.positions[1:]:
-            if snake.positions[0] == i:
-                print('Game Over')
-                snake.isrunning = False
-                reward = -10
-
-        
-    if snake.frameiteration > 100*len(snake.positions):
-        print('Game Over')
-        reward = -10
-        snake.isrunning = False
-
-    return reward, snake.score, snake.isrunning
-
-
-
-def change_direction(snake, food, action):
-    # action is a one hot encoded array passed by the agent 
-
-    
-
-    if np.array_equal(action, [1, 0, 0]):
-        snake.direction = 0
-    elif np.array_equal(action, [0, 1, 0]):
-        snake.direction = 1
-    elif np.array_equal(action, [0, 0, 1]):
-        snake.direction = 2
-    else:
-        snake.direction = 3
-
-
-
-
-
-    for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                quit()
-            
-
-    draw_grid(snake, food)
-    check_collision(snake, food)
-    snake.move()
-    draw_grid(snake, food)
+        return True
+    return False
 
 def draw_grid(snake, food):
     screen.fill((0, 0, 0))
-    counter_head = 0
     for x, y in snake.positions:
-            print(snake.positions)
-            if counter_head == 0:
-                [pg.draw.rect(screen, 'green', (x, y, Tile_Size, Tile_Size))]
-                counter_head += 1
-            else:
-                [pg.draw.rect(screen, 'blue', (x, y, Tile_Size, Tile_Size))]
-
-    [pg.draw.rect(screen, 'red', (x, y, Tile_Size, Tile_Size)) for x, y in food.position]
-
-
-
-    
-def game_reset(snake, food):
-    snake.reset()
-    food.position = []
-    food.randomize_position()
+        color = 'green' if (x, y) == snake.positions[0] else 'blue'
+        pg.draw.rect(screen, color, (x, y, Tile_Size, Tile_Size))
+    food.draw()
     snake.drawScore()
-    draw_grid(snake, food)
-    pg.display.flip()
 
+class QLearningAgent:
+    def __init__(self, state_size, action_size, alpha=0.2, gamma=0.998, epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.1):
+        self.state_size = state_size
+        self.action_size = action_size
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.epsilon_min = epsilon_min
+        self.q_table = {}
 
+    def get_state(self, snake, food):
+        return (self.calculate_relative_position(snake, food), self.calculate_relative_danger(snake), snake.direction)
 
+    def calculate_relative_position(self, snake, food):
+        head = snake.positions[0]
+        food_pos = food.position[0]
+        return (food_pos[0] - head[0], food_pos[1] - head[1])
 
+    def calculate_relative_danger(self, snake):
+        head = snake.positions[0]
+        if (head[0] >= Window_Width or head[0] < 0 or head[1] >= Window_Height or head[1] < 0 or any(head == pos for pos in snake.positions[1:])):
+            return 1
+        return 0
 
+    def choose_action(self, state):
+        if uniform(0, 1) < self.epsilon:
+            x = randint(0, self.action_size - 1)
+            print("", x)
+            return x
+        else:
+            return np.argmax(self.q_table.get(state, [0] * self.action_size))
 
+    def learn(self, state, action, reward, next_state):
+        old_value = self.q_table.get(state, [0] * self.action_size)[action]
+        next_max = max(self.q_table.get(next_state, [0] * self.action_size))
+        new_value = old_value + self.alpha * (reward + self.gamma * next_max - old_value)
+        if state not in self.q_table:
+            self.q_table[state] = [0] * self.action_size
+        self.q_table[state][action] = new_value
 
+    def update_epsilon(self):
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+    def save_model(self, filename='q_learning_model.pkl'):
+        with open(filename, 'wb') as file:
+            pickle.dump(self.q_table, file)
+
+    def load_model(self, filename='q_learning_model.pkl'):
+        with open(filename, 'rb') as file:
+            self.q_table = pickle.load(file)
 
 def main():
     snake = SnakeAgent()
-    SnakeAgent.random_head_position(snake)
+    snake.generate_head_position()
     food = Food()
-    snake.drawScore()
-    Food.randomize_position(food)
-    
-    while True: 
-        change_direction(snake, food)
-        snake.drawScore()
-        if snake.isrunning == False:
-            break
+    food.randomize_position()
+
+    agent = QLearningAgent(state_size=3, action_size=4)
+   
+    num_iterations = 25000
+
+    for iteration in range(1, num_iterations + 1):
+        state = agent.get_state(snake, food)
+        action = agent.choose_action(state)
+        snake.direction = action
+        snake.move()
+        next_state = agent.get_state(snake, food)
+
+        if snake.positions[0] == food.position[0]:
+            reward = 100
+            food.randomize_position()
+            snake.length += 1
+            snake.score += 1
+            snake.positions.append(snake.lastpositionbuff)
+        else:
+            reward = 0
+
+        if check_collision(snake, food):
+            reward = -10
+            if snake.score > 5:
+                print(f'Iteration: {iteration}, Score: {snake.score}')
+            snake.reset()
+            food.randomize_position()
+
+        agent.learn(state, action, reward, next_state)
+        agent.update_epsilon()
+
+        draw_grid(snake, food)
         pg.display.flip()
-        clock.tick(10)
-    
+        clock.tick(100)
+
+    agent.save_model()
+    print('training completed')
+
 if __name__ == '__main__':
     main()
