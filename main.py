@@ -80,7 +80,7 @@ class Food:
         self.position.append(((randrange(0, Window_Width, Tile_Size), randrange(0, Window_Height, Tile_Size))))
         for i in self.position:
             if i == 0 or i == 25:
-                i = 50;
+                i = 50
 
     def draw(self):
         pg.draw.rect(screen, 'red', (self.position[0], self.position[1], Tile_Size, Tile_Size))
@@ -113,11 +113,6 @@ def check_collision(snake, food):
                 pg.quit()
                 quit()
         
-    
-
-
-
-
 
 def change_direction(snake, event, food):
     for event in pg.event.get():
@@ -143,8 +138,8 @@ def change_direction(snake, event, food):
                     snake.direction = 3
 
     draw_grid(snake, food)
-    check_collision(snake, food)
     snake.move()
+    check_collision(snake, food)
     draw_grid(snake, food)
 
 def draw_grid(snake, food):
