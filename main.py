@@ -95,12 +95,16 @@ def check_collision(snake, food):
         food.randomize_position()
         snake.score += 1
         snake.drawScore()
+
     if snake.positions[0][0] == Window_Width or snake.positions[0][0] == -Tile_Size:
+
         print(snake.positions[0][0])
         print('Game Over')
         pg.quit()
         quit()
+
     if snake.positions[0][1] == Window_Height or snake.positions[0][1] == -Tile_Size:
+
         print(snake.positions[0][1])
         print('Game Over')
         game_reset(snake, food)
