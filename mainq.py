@@ -2,7 +2,6 @@ import pygame as pg
 import numpy as np
 import pickle
 from random import randrange, randint, uniform
-from math import sqrt
 
 pg.init()
 font = pg.font.SysFont('dejavusansmono', 25)
@@ -88,7 +87,7 @@ def draw_grid(snake, food):
     snake.drawScore()
 
 class QLearningAgent:
-    def __init__(self, state_size, action_size, alpha=0.2, gamma=0.998, epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.1):
+    def __init__(self, state_size, action_size, alpha=0.1, gamma=0.95, epsilon=1.0, epsilon_decay=0.995, epsilon_min=0.01):
         self.state_size = state_size
         self.action_size = action_size
         self.alpha = alpha
@@ -108,15 +107,20 @@ class QLearningAgent:
 
     def calculate_relative_danger(self, snake):
         head = snake.positions[0]
-        if (head[0] >= Window_Width or head[0] < 0 or head[1] >= Window_Height or head[1] < 0 or any(head == pos for pos in snake.positions[1:])):
-            return 1
-        return 0
+        danger = [0, 0, 0, 0]  # up, right, down, left
+        if head[1] - Tile_Size < 0 or (head[0], head[1] - Tile_Size) in snake.positions:
+            danger[0] = 1
+        if head[0] + Tile_Size >= Window_Width or (head[0] + Tile_Size, head[1]) in snake.positions:
+            danger[1] = 1
+        if head[1] + Tile_Size >= Window_Height or (head[0], head[1] + Tile_Size) in snake.positions:
+            danger[2] = 1
+        if head[0] - Tile_Size < 0 or (head[0] - Tile_Size, head[1]) in snake.positions:
+            danger[3] = 1
+        return tuple(danger)
 
     def choose_action(self, state):
         if uniform(0, 1) < self.epsilon:
-            x = randint(0, self.action_size - 1)
-            print("", x)
-            return x
+            return randint(0, self.action_size - 1)
         else:
             return np.argmax(self.q_table.get(state, [0] * self.action_size))
 
@@ -132,11 +136,11 @@ class QLearningAgent:
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def save_model(self, filename='q_learning_model.pkl'):
+    def save_model(self, filename='q_learning_model2.pkl'):
         with open(filename, 'wb') as file:
             pickle.dump(self.q_table, file)
 
-    def load_model(self, filename='q_learning_model.pkl'):
+    def load_model(self, filename='q_learning_model2.pkl'):
         with open(filename, 'rb') as file:
             self.q_table = pickle.load(file)
 
@@ -146,9 +150,9 @@ def main():
     food = Food()
     food.randomize_position()
 
-    agent = QLearningAgent(state_size=3, action_size=4)
-   
-    num_iterations = 25000
+    agent = QLearningAgent(state_size=5, action_size=4)
+    agent.load_model()
+    num_iterations = 250000
 
     for iteration in range(1, num_iterations + 1):
         state = agent.get_state(snake, food)
@@ -164,10 +168,10 @@ def main():
             snake.score += 1
             snake.positions.append(snake.lastpositionbuff)
         else:
-            reward = 0
+            reward = -1
 
         if check_collision(snake, food):
-            reward = -10
+            reward = -100
             if snake.score > 5:
                 print(f'Iteration: {iteration}, Score: {snake.score}')
             snake.reset()
@@ -181,7 +185,7 @@ def main():
         clock.tick(100)
 
     agent.save_model()
-    print('training completed')
+    print('Training completed')
 
 if __name__ == '__main__':
     main()
